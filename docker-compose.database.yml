@@ -1,0 +1,23 @@
+services:
+  solicitudes_postgres_db:
+    image: postgres:16
+    container_name: solicitudes_postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: solicitudes_db
+      POSTGRES_USER: solicitudes_user
+      POSTGRES_PASSWORD: solicitudes_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - solicitudes_postgres_data:/var/lib/postgresql/data
+    networks:
+      - solicitudes_network
+
+volumes:
+  solicitudes_postgres_data:
+    name: solicitudes_postgres_data
+
+networks:
+  solicitudes_network:
+    external: true

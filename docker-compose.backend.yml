@@ -1,0 +1,19 @@
+services:
+  solicitudes_backend_django:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: solicitudes_backend_django
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    networks:
+      - solicitudes_network
+
+networks:
+  solicitudes_network:
+    external: true

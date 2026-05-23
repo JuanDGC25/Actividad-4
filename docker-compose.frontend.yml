@@ -1,0 +1,20 @@
+services:
+  solicitudes_frontend_react:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: solicitudes_frontend_react
+    restart: always
+    env_file:
+      - ./frontend/.env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - solicitudes_network
+
+networks:
+  solicitudes_network:
+    external: true
