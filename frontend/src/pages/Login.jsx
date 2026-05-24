@@ -3,27 +3,44 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function Login() {
-  const [nombre, setNombre] = useState('')
-  const [rol, setRol] = useState('Solicitante')
+  const [formulario, setFormulario] = useState({
+    username: '',
+    password: '',
+  })
+
   const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(false)
 
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleChange = (e) => {
+    setFormulario({
+      ...formulario,
+      [e.target.name]: e.target.value,
+    })
+  }
 
-    if (nombre.trim().length < 3) {
-      setError('Ingrese un nombre válido para continuar.')
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    if (!formulario.username.trim() || !formulario.password.trim()) {
+      setError('Ingrese usuario y contraseña.')
       return
     }
 
-    login({
-      nombre: nombre.trim(),
-      rol,
-    })
+    try {
+      setCargando(true)
 
-    navigate('/')
+      await login(formulario)
+
+      navigate('/')
+    } catch (error) {
+      setError('Usuario o contraseña incorrectos.')
+    } finally {
+      setCargando(false)
+    }
   }
 
   return (
@@ -31,28 +48,38 @@ function Login() {
       <section className="login-card">
         <h1>Sistema de Solicitudes Internas</h1>
         <p>
-          Ingrese al sistema para registrar, consultar y hacer seguimiento a las solicitudes internas.
+          Ingrese con un usuario registrado en la base de datos para gestionar las solicitudes.
         </p>
+
+        <div className="credentials-box">
+          <strong>Usuario inicial:</strong>
+          <span>admin / admin123</span>
+        </div>
 
         {error && <div className="alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <label>Nombre del usuario</label>
+          <label>Usuario</label>
           <input
+            name="username"
             type="text"
-            placeholder="Ej: Juan Diego González"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Ej: admin"
+            value={formulario.username}
+            onChange={handleChange}
           />
 
-          <label>Rol</label>
-          <select value={rol} onChange={(e) => setRol(e.target.value)}>
-            <option value="Solicitante">Solicitante</option>
-            <option value="Responsable">Responsable de área</option>
-            <option value="Administrador">Administrador</option>
-          </select>
+          <label>Contraseña</label>
+          <input
+            name="password"
+            type="password"
+            placeholder="Ingrese su contraseña"
+            value={formulario.password}
+            onChange={handleChange}
+          />
 
-          <button type="submit">Ingresar</button>
+          <button type="submit" disabled={cargando}>
+            {cargando ? 'Ingresando...' : 'Ingresar'}
+          </button>
         </form>
       </section>
     </main>

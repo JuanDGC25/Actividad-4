@@ -91,6 +91,18 @@ Desarrollar una aplicación web funcional que permita gestionar solicitudes inte
 - Docker
 - Docker Compose
 
+## Autenticación
+
+La aplicación implementa autenticación sencilla mediante usuarios almacenados en la base de datos PostgreSQL.
+
+El backend utiliza el modelo `User` de Django y autenticación por token de Django REST Framework. Al iniciar sesión, el sistema valida las credenciales y retorna un token que el frontend almacena en `localStorage`.
+
+Usuario inicial:
+
+```txt
+usuario: admin
+contraseña: admin123
+```
 ---
 
 ## Estructura del proyecto
@@ -149,3 +161,4 @@ actividad-4-solicitudes/
         │
         ├── App.jsx
         └── main.jsx
+

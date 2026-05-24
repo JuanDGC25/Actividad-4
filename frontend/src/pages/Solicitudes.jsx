@@ -96,15 +96,15 @@ function Solicitudes() {
                   <tr key={solicitud.id}>
                     <td>{solicitud.titulo}</td>
                     <td>{solicitud.categoria}</td>
-                    <td>{solicitud.solicitante}</td>
+                    <td>{solicitud.solicitante_nombre}</td>
                     <td>
                       <span className={`badge badge-${solicitud.prioridad.toLowerCase()}`}>
                         {solicitud.prioridad}
                       </span>
                     </td>
                     <td>
-                      <span className={`status status-${solicitud.estado.toLowerCase()}`}>
-                        {solicitud.estado.replace('_', ' ')}
+                      <span className={`status status-${solicitud.estado_codigo.toLowerCase()}`}>
+                        {solicitud.estado_nombre}
                       </span>
                     </td>
                     <td className="actions">

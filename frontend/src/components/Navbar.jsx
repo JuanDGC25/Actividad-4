@@ -24,7 +24,10 @@ function Navbar() {
       </nav>
 
       <div className="navbar-user">
-        <small>{usuario?.nombre}</small>
+        <small>
+          {usuario?.nombre} <br />
+          <span>{usuario?.rol}</span>
+        </small>
         <button onClick={handleLogout}>Cerrar sesión</button>
       </div>
     </header>

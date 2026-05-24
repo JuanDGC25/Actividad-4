@@ -7,45 +7,97 @@ function DetalleSolicitud() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const [solicitud, setSolicitud] = useState(null)
-  const [estado, setEstado] = useState('')
-  const [responsable, setResponsable] = useState('')
+  const [formulario, setFormulario] = useState({
+    titulo: '',
+    descripcion: '',
+    categoria: '',
+    solicitante: '',
+    responsable: '',
+    estado: '',
+    prioridad: '',
+    observaciones: '',
+  })
+
+  const [usuarios, setUsuarios] = useState([])
+  const [estados, setEstados] = useState([])
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    obtenerSolicitud()
+    cargarDatos()
   }, [id])
 
-  const obtenerSolicitud = async () => {
+  const cargarDatos = async () => {
     try {
-      const response = await api.get(`/solicitudes/${id}/`)
-      setSolicitud(response.data)
-      setEstado(response.data.estado)
-      setResponsable(response.data.responsable || '')
+      const [solicitudResponse, usuariosResponse, estadosResponse] = await Promise.all([
+        api.get(`/solicitudes/${id}/`),
+        api.get('/usuarios/'),
+        api.get('/estados/'),
+      ])
+
+      const solicitud = solicitudResponse.data
+
+      setFormulario({
+        titulo: solicitud.titulo || '',
+        descripcion: solicitud.descripcion || '',
+        categoria: solicitud.categoria || '',
+        solicitante: solicitud.solicitante || '',
+        responsable: solicitud.responsable || '',
+        estado: solicitud.estado || '',
+        prioridad: solicitud.prioridad || '',
+        observaciones: solicitud.observaciones || '',
+      })
+
+      setUsuarios(usuariosResponse.data)
+      setEstados(estadosResponse.data)
     } catch (error) {
-      setError('No fue posible cargar la solicitud.')
+      setError('No fue posible cargar la información de la solicitud.')
     } finally {
       setCargando(false)
     }
   }
 
-  const actualizarEstado = async (e) => {
+  const handleChange = (e) => {
+    setFormulario({
+      ...formulario,
+      [e.target.name]: e.target.value,
+    })
+  }
+
+  const actualizarSolicitud = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (formulario.titulo.trim().length < 5) {
+      setError('El título debe tener al menos 5 caracteres.')
+      return
+    }
+
+    if (formulario.descripcion.trim().length < 10) {
+      setError('La descripción debe tener al menos 10 caracteres.')
+      return
+    }
 
     try {
       setGuardando(true)
 
-      await api.patch(`/solicitudes/${id}/`, {
-        estado,
-        responsable,
-      })
+      const payload = {
+        titulo: formulario.titulo,
+        descripcion: formulario.descripcion,
+        categoria: formulario.categoria,
+        solicitante: formulario.solicitante,
+        responsable: formulario.responsable || null,
+        estado: formulario.estado,
+        prioridad: formulario.prioridad,
+        observaciones: formulario.observaciones,
+      }
+
+      await api.put(`/solicitudes/${id}/`, payload)
 
       navigate('/solicitudes')
     } catch (error) {
-      setError('No fue posible actualizar la solicitud.')
+      setError('No fue posible actualizar completamente la solicitud.')
     } finally {
       setGuardando(false)
     }
@@ -58,8 +110,8 @@ function DetalleSolicitud() {
       <main className="container">
         <section className="page-header">
           <div>
-            <h1>Detalle de solicitud</h1>
-            <p>Consulta y actualización del estado del requerimiento.</p>
+            <h1>Editar solicitud</h1>
+            <p>Actualización completa del requerimiento interno.</p>
           </div>
 
           <Link className="button-secondary" to="/solicitudes">
@@ -71,52 +123,108 @@ function DetalleSolicitud() {
 
         {cargando ? (
           <p>Cargando detalle...</p>
-        ) : solicitud ? (
-          <section className="detail-grid">
-            <article className="detail-card">
-              <h2>{solicitud.titulo}</h2>
+        ) : (
+          <section className="form-card">
+            <form onSubmit={actualizarSolicitud}>
+              <label>Título</label>
+              <input
+                name="titulo"
+                type="text"
+                value={formulario.titulo}
+                onChange={handleChange}
+              />
 
-              <p>
-                <strong>Descripción:</strong><br />
-                {solicitud.descripcion}
-              </p>
+              <label>Descripción</label>
+              <textarea
+                name="descripcion"
+                value={formulario.descripcion}
+                onChange={handleChange}
+                rows="5"
+              />
 
-              <p><strong>Categoría:</strong> {solicitud.categoria}</p>
-              <p><strong>Solicitante:</strong> {solicitud.solicitante}</p>
-              <p><strong>Prioridad:</strong> {solicitud.prioridad}</p>
-              <p><strong>Estado actual:</strong> {solicitud.estado.replace('_', ' ')}</p>
-              <p><strong>Fecha creación:</strong> {new Date(solicitud.fecha_creacion).toLocaleString()}</p>
-            </article>
+              <label>Categoría</label>
+              <select
+                name="categoria"
+                value={formulario.categoria}
+                onChange={handleChange}
+              >
+                <option value="Soporte técnico">Soporte técnico</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+                <option value="Compras">Compras</option>
+                <option value="Talento humano">Talento humano</option>
+                <option value="Gestión administrativa">Gestión administrativa</option>
+              </select>
 
-            <article className="form-card">
-              <h2>Actualizar seguimiento</h2>
+              <label>Solicitante</label>
+              <select
+                name="solicitante"
+                value={formulario.solicitante}
+                onChange={handleChange}
+              >
+                {usuarios.map((usuario) => (
+                  <option key={usuario.id} value={usuario.id}>
+                    {usuario.first_name || usuario.username} {usuario.last_name || ''}
+                  </option>
+                ))}
+              </select>
 
-              <form onSubmit={actualizarEstado}>
-                <label>Responsable</label>
-                <input
-                  type="text"
-                  value={responsable}
-                  onChange={(e) => setResponsable(e.target.value)}
-                  placeholder="Ej: Área de sistemas"
-                />
+              <label>Responsable</label>
+              <select
+                name="responsable"
+                value={formulario.responsable || ''}
+                onChange={handleChange}
+              >
+                <option value="">Sin asignar</option>
+                {usuarios.map((usuario) => (
+                  <option key={usuario.id} value={usuario.id}>
+                    {usuario.first_name || usuario.username} {usuario.last_name || ''}
+                  </option>
+                ))}
+              </select>
 
-                <label>Estado</label>
-                <select value={estado} onChange={(e) => setEstado(e.target.value)}>
-                  <option value="PENDIENTE">Pendiente</option>
-                  <option value="EN_PROCESO">En proceso</option>
-                  <option value="CERRADA">Cerrada</option>
-                </select>
+              <label>Estado</label>
+              <select
+                name="estado"
+                value={formulario.estado}
+                onChange={handleChange}
+              >
+                {estados.map((estado) => (
+                  <option key={estado.id} value={estado.id}>
+                    {estado.nombre}
+                  </option>
+                ))}
+              </select>
+
+              <label>Prioridad</label>
+              <select
+                name="prioridad"
+                value={formulario.prioridad}
+                onChange={handleChange}
+              >
+                <option value="BAJA">Baja</option>
+                <option value="MEDIA">Media</option>
+                <option value="ALTA">Alta</option>
+              </select>
+
+              <label>Observaciones</label>
+              <textarea
+                name="observaciones"
+                value={formulario.observaciones}
+                onChange={handleChange}
+                rows="3"
+              />
+
+              <div className="form-actions">
+                <button type="button" className="button-secondary" onClick={() => navigate('/solicitudes')}>
+                  Cancelar
+                </button>
 
                 <button type="submit" disabled={guardando}>
-                  {guardando ? 'Actualizando...' : 'Actualizar solicitud'}
+                  {guardando ? 'Actualizando...' : 'Guardar cambios'}
                 </button>
-              </form>
-            </article>
+              </div>
+            </form>
           </section>
-        ) : (
-          <div className="empty-state">
-            La solicitud no fue encontrada.
-          </div>
         )}
       </main>
     </>
